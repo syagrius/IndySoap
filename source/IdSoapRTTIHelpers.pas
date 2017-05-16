@@ -551,6 +551,9 @@ end;
 procedure DynArrayCopy(ASrc: Pointer; ATypeInfo: PTypeInfo; Var ADest: Pointer);
 const ASSERT_LOCATION = ASSERT_UNIT+'.DynArrayCopy';
 begin
+  {$IFDEF WIN64}
+  raise Exception.Create('Not Done Yet');
+  {$ELSE}
   Asm
     mov eax,[ASrc]
     mov eax,[eax]
@@ -561,6 +564,7 @@ begin
   Dummy1 := copy(Dummy2);
   asm
     end;
+  {$ENDIF}
 end;
 
 Procedure IdSoapDynArrayEasySetLength(Var VArrayPtr: Pointer; AArrayTypeInfo: PTypeInfo; ALength: Integer);
@@ -583,6 +587,9 @@ procedure IdSoapDynArrayClear(var VArray: Pointer; ATypeInfo: PTypeInfo);
 Const
   ASSERT_LOCATION = ASSERT_UNIT+'.IdSoapDynArrayClear';
 begin
+  {$IFDEF WIN64}
+  raise Exception.Create('Not Done Yet');
+  {$ELSE}
   // no test for AArray
   Assert(Assigned(ATypeInfo),ASSERT_LOCATION+': ATypeinfo is nil');
   if not assigned(VArray) then  // nothing to finalize
@@ -594,6 +601,7 @@ begin
     mov edx,ATypeinfo
     call system.@DynArrayClear;
     end;
+  {$ENDIF}
 end;
 
 function IdSoapArrayElementSize(AArrayTypeInfo: PTypeInfo): Integer;
@@ -790,6 +798,49 @@ begin
 end;
 
 // this allows for fast efficient calling wit up to 2 params. result = EAX:EDX
+{$IFDEF WIN64}
+Function ProcCall(ASelf: Pointer; AParam1,AParam2: pointer; AProcAdr: Pointer): Int64;
+begin
+  raise Exception.Create('To Do');
+end;
+
+Function StackProcCall1(ASelf: Pointer; AParam1: pointer; AProcAdr: Pointer): Int64;
+begin
+  raise Exception.Create('To Do');
+end;
+
+Function StackProcCall2(ASelf: Pointer; AParam1,AParam2: pointer; AProcAdr: Pointer): Int64;
+begin
+  raise Exception.Create('To Do');
+end;
+
+Function StackProcCall3(ASelf: Pointer; AParam1,AParam2,AParam3: pointer; AProcAdr: Pointer): Int64;
+begin
+  raise Exception.Create('To Do');
+end;
+
+function LowPointer(Const AData): Pointer;
+begin
+  raise Exception.Create('To Do');
+end;
+
+function HighPointer(Const AData): Pointer;
+begin
+  raise Exception.Create('To Do');
+end;
+
+function High1Pointer(Const AData): Pointer;
+begin
+  raise Exception.Create('To Do');
+end;
+
+// Helper used to compute VMT proc/func address for a property
+function VMTEntry(ASelf: Pointer; AOffset: Pointer): Pointer;
+begin
+  raise Exception.Create('To Do');
+end;
+
+{$ELSE}
 Function ProcCall(ASelf: Pointer; AParam1,AParam2: pointer; AProcAdr: Pointer): Int64; Assembler;
 const ASSERT_LOCATION = ASSERT_UNIT+'.ProcCall';
 asm
@@ -862,6 +913,7 @@ asm
   add edx,[eax]               // add to VMT for resulting func ptr
   mov eax,[edx]                 // place in result
 end;
+{$ENDIF}
 
 //                           GET routines
 
@@ -1065,17 +1117,25 @@ begin
     $ff:  Result := Single(IdSoapPtrInc(ASelf,Cardinal(LGetProc) and $00ffffff)^);    // Its a field
     $fe:  begin
           ProcCall(ASelf,nil,nil,VMTEntry(ASelf,LGetProc));                 // Its a virtual method
+{$IFDEF WIN64}
+raise Exception.Create('To Do');
+{$ELSE}
           asm
             fstp DWord Ptr Result
             wait
             end;
+          {$ENDIF}
           end;
     else  begin
           ProcCall(ASelf,nil,nil,LGetProc);                                 // Its a static method
+{$IFDEF WIN64}
+raise Exception.Create('To Do');
+{$ELSE}
           asm
             fstp DWord Ptr Result
             wait
             end;
+            {$ENDIF}
           end;
     end;
 end;
@@ -1095,17 +1155,25 @@ begin
     $ff:  Result := Double(IdSoapPtrInc(ASelf,Cardinal(LGetProc) and $00ffffff)^);    // Its a field
     $fe:  begin
           ProcCall(ASelf,nil,nil,VMTEntry(ASelf,LGetProc));                 // Its a virtual method
+{$IFDEF WIN64}
+raise Exception.Create('To Do');
+{$ELSE}
           asm
             fstp QWord Ptr Result
             wait
             end;
+{$ENDIF}
           end;
     else  begin
           ProcCall(ASelf,nil,nil,LGetProc);                                 // Its a static method
+{$IFDEF WIN64}
+raise Exception.Create('To Do');
+{$ELSE}
           asm
             fstp QWord Ptr Result
             wait
             end;
+{$ENDIF}
           end;
     end;
 end;
@@ -1125,17 +1193,25 @@ begin
     $ff:  Result := Extended(IdSoapPtrInc(ASelf,Cardinal(LGetProc) and $00ffffff)^);    // Its a field
     $fe:  begin
           ProcCall(ASelf,nil,nil,VMTEntry(ASelf,LGetProc));       // Its a virtual method
+{$IFDEF WIN64}
+raise Exception.Create('To Do');
+{$ELSE}
           asm
             fstp TByte Ptr result
             wait
             end;
+{$ENDIF}
           end;
     else  begin
           ProcCall(ASelf,nil,nil,LGetProc);                       // Its a static method
+{$IFDEF WIN64}
+raise Exception.Create('To Do');
+{$ELSE}
           asm
             fstp TByte Ptr result
             wait
             end;
+{$ENDIF}
           end;
     end;
 end;
@@ -1155,17 +1231,25 @@ begin
     $ff:  Result := Comp(IdSoapPtrInc(ASelf,Cardinal(LGetProc) and $00ffffff)^);    // Its a field
     $fe:  begin
           ProcCall(ASelf,nil,nil,VMTEntry(ASelf,LGetProc));       // Its a virtual method
+{$IFDEF WIN64}
+raise Exception.Create('To Do');
+{$ELSE}
           asm
             fistp QWord Ptr result
             wait
             end;
+{$ENDIF}
           end;
     else  begin
           ProcCall(ASelf,nil,nil,LGetProc);                       // Its a static method
+{$IFDEF WIN64}
+raise Exception.Create('To Do');
+{$ELSE}
           asm
             fistp QWord Ptr result
             wait
             end;
+{$ENDIF}
           end;
     end;
 end;
@@ -1185,17 +1269,25 @@ begin
     $ff:  Result := Currency(IdSoapPtrInc(ASelf,Cardinal(LGetProc) and $00ffffff)^);    // Its a field
     $fe:  begin
           ProcCall(ASelf,nil,nil,VMTEntry(ASelf,LGetProc));       // Its a virtual method
+{$IFDEF WIN64}
+raise Exception.Create('To Do');
+{$ELSE}
           asm
             fistp QWord Ptr result
             wait
             end;
+{$ENDIF}
           end;
     else  begin
           ProcCall(ASelf,nil,nil,LGetProc);                       // Its a static method
+{$IFDEF WIN64}
+raise Exception.Create('To Do');
+{$ELSE}
           asm
             fistp QWord Ptr result
             wait
             end;
+{$ENDIF}
           end;
     end;
 end;

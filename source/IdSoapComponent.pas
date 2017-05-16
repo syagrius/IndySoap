@@ -36,8 +36,10 @@ type
 {==============================================================================}
 
   TIdSoapComponent = class(TIdComponent)
+  Private
+    FSerialNo : Cardinal;
   Public
-  {$IFNDEF INDY_V10}
+    {$IFNDEF INDY_V10}
     constructor Create(AOwner: TComponent); Override;
     {$ENDIF}
     destructor Destroy; Override;
@@ -56,7 +58,7 @@ constructor TIdSoapComponent.Create(AOwner: TComponent);
 begin
   inherited;
   {$IFDEF OBJECT_TRACKING}
-  IdObjectRegister(self);
+  FSerialNo := IdObjectRegister(self);
   {$ENDIF}
 end;
 {$ENDIF}
@@ -64,7 +66,7 @@ end;
 destructor TIdSoapComponent.Destroy;
 begin
   {$IFDEF OBJECT_TRACKING}
-  IdObjectDeregister(self);
+  IdObjectDeregister(self, FSerialNo);
   {$ENDIF}
   inherited;
 end;

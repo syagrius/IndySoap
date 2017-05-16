@@ -35,6 +35,10 @@ Const
   ALLOW_NIL = true;
   
 type
+  {$IFDEF VER130}
+  NativeUInt = Cardinal;
+  {$ENDIF}
+  
   {$M+}
   TIdBaseObject = class (TObject)
   Private
@@ -82,7 +86,7 @@ type
 // use the object tracking system
 function IdObjectRegister(AObject: TObject): Cardinal;
 function IdObjectTestValid(AObject: TObject; AClassType: TClass = NIL; AAllowNil : boolean = false): Boolean;
-procedure IdObjectDeregister(AObject: TObject);
+procedure IdObjectDeregister(AObject: TObject; serial : cardinal);
 procedure IdObjectBreakPointOnFree(AObject: TObject);
 function IdClassInstanceCount(AClassName : String) : Integer;
 function IdGetThreadObjectCount : Integer;
@@ -104,8 +108,9 @@ uses
   {$IFDEF USE_ADV}
   AdvFactories,
   AdvStringIntegerMatches,
-  {$ENDIF}
+  {$ELSE}
   IdSoapTracker,
+  {$ENDIF}
   {$ENDIF}
   SysUtils,
   windows;
@@ -134,7 +139,7 @@ end;
 
 destructor TIdBaseObject.Destroy;
 begin
-  IdObjectDeregister(self);
+  IdObjectDeregister(self, FSerialNo);
   inherited;
 end;
 
@@ -192,12 +197,13 @@ begin
   {$ENDIF}
 end;
 
-procedure IdObjectDeregister(AObject: TObject);
+procedure IdObjectDeregister(AObject: TObject; serial : cardinal);
 begin
   dec(GThreadObjectCount);
   {$IFDEF OBJECT_TRACKING}
   {$IFDEF USE_ADV}
-  Factory.Destruct(AObject);
+  if serial <> 0 then
+    Factory.Destruct(AObject);
   {$ELSE}
   if assigned(gObjectList) then
     begin

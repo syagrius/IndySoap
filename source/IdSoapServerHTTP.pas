@@ -183,7 +183,7 @@ begin
         end;
       if not LHandled then
         begin
-        if AnsiSameText(ARequestInfo.Document, FSOAPPath) then
+        if AnsiSameText(ARequestInfo.Document, FSOAPPath) or AnsiSameText(ARequestInfo.Document, FSOAPPath+'/')  then
           begin
           Assert(FSoapServer.TestValid, ASSERT_LOCATION+': No Valid Soap Server Could be found');
           ARequestInfo.PostStream.Position := 0;

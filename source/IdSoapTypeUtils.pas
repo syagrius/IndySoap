@@ -132,6 +132,10 @@ begin
           begin
           Result := ID_SOAP_XSI_TYPE_DATETIME;
           end
+        else if LTypInfo.Name = 'TIdSoapDuration' then { do not localize }
+          begin
+          Result := ID_SOAP_XSI_TYPE_DURATION;
+          end
         else if LTypInfo.Name = 'TIdSoapDate' then { do not localize }
           begin
           Result := ID_SOAP_XSI_TYPE_DATE;
@@ -246,7 +250,7 @@ begin
     begin
     result := TypeInfo(String);
     end
-  else if ASchemaType = ID_SOAP_XSI_TYPE_INTEGER then
+  else if (ASchemaType = ID_SOAP_XSI_TYPE_INTEGER) or (ASchemaType = ID_SOAP_XSI_TYPE_UNSIGNEDLONG) then
     begin
     result := TypeInfo(INTEGER);
     end
@@ -318,6 +322,10 @@ begin
     begin
     result := TypeInfo(TIdSoapDateTime);
     end
+//  else if ASchemaType = ID_SOAP_XSI_TYPE_DURATION then
+//    begin
+//    result := TypeInfo(TIdSoapDuration);
+//    end
   else if ASchemaType = ID_SOAP_XSI_TYPE_DATE then
     begin
     result := TypeInfo(TIdSoapDate);
@@ -365,6 +373,8 @@ begin
      (AName = ID_SOAP_XSI_TYPE_COMP) or
      (AName = ID_SOAP_XSI_TYPE_CURRENCY) or
      (AName = ID_SOAP_XSI_TYPE_DATETIME) or
+     (AName = ID_SOAP_XSI_TYPE_DURATION) or
+     (AName = ID_SOAP_XSI_TYPE_UNSIGNEDLONG) or
      (AName = ID_SOAP_XSI_TYPE_DATE) or
      (AName = ID_SOAP_XSI_TYPE_TIME) or
      (AName = ID_SOAP_XSI_TYPE_DOUBLE) or

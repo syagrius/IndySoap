@@ -22,6 +22,9 @@ uses
   TypInfo,
   windows;
 
+{$IFDEF WIN64}
+  {$UNDEF SMARTERRORS}
+{$ENDIF}
 const
   DEFAULT_HASH_SIZE = 100;
   DEFAULT_ALLOCATION_SIZE = 16;
@@ -56,7 +59,7 @@ type
     destructor Destroy; Override;
   end;
 
-  TIdSoapSectionList = array [0..(MAXINT - 4) div sizeof(TIdSoapKeyListSection)] of TIdSoapKeyListSection;
+  TIdSoapSectionList = array [0..(MAXINT - {$IFDEF WIN64}8{$ELSE}4{$ENDIF}) div sizeof(TIdSoapKeyListSection)] of TIdSoapKeyListSection;
   pIdSoapSectionList = ^TIdSoapSectionList;
 
   TIdSoapKeyProgressRec = record
@@ -342,7 +345,9 @@ implementation
 
 uses
   IdSoapExceptions,
-  IdSoapPointerManipulator,
+  {$IFDEF WIN32}
+//  IdSoapPointerManipulator,
+  {$ENDIF}
   IdSoapResourceStrings
   {$IFDEF ID_SOAP_COMPRESSION}, ZLib {$ENDIF}
   ;
@@ -360,6 +365,7 @@ begin
     end
 end;
 
+{$IFDEF WIN32}
 function CallerAddr: Pointer; Assembler;
 const
   CallerIP = $4;
@@ -382,6 +388,7 @@ asm
    xor eax, eax
 @@Finish:
 end;
+{$ENDIF}
 
 procedure StringAppendStart(var VStr: String; var VLen: Integer);
 var

@@ -123,7 +123,7 @@ end;
 
 destructor TIdSoapBaseImplementation.Destroy;
 begin
-  IdObjectDeregister(self);
+  IdObjectDeregister(self, FSerialNo);
   inherited;
 end;
 

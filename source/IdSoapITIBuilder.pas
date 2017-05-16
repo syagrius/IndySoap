@@ -141,8 +141,9 @@ begin
       cardinal(p) := 10;
       LResourceEntry.ResType := p;
       {$ELSE}
-      LResType := #10;
-      LResourceEntry.ResType := pchar(LResType);
+//      LResType := #10;
+//      LResourceEntry.ResType := pchar(LResType);
+      LResourceEntry.ResType := RT_RCDATA;
       {$ENDIF}
       LResourceEntry.Name := LResourceName;
       LResourceCreator.SaveToFile(LResourceFile);

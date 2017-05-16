@@ -11,6 +11,7 @@ unit IdSoapTestingUtils;
 interface
 
 uses
+  SysUtils,
   Classes,
   IdSoapClasses,
   IdSoapITI;
@@ -37,6 +38,7 @@ procedure IdSoapSaveStringToFile(const AString : AnsiString; const AFileName : A
 procedure IdSoapOpenDocument(const ADocument : AnsiString);
 procedure IdSoapViewString(const AString : AnsiString; AExtension : AnsiString);
 procedure IdSoapViewStream(AStream : TStream; AExtension : AnsiString);
+procedure IdSoapXmlCheckDifferent(filename1, filename2 : String);
 procedure IdSoapShowXMLDiff(AStream1, AStream2 : TStream); overload;
 procedure IdSoapShowXMLDiff(s1, s2 : AnsiString); overload;
 procedure IdSoapShowTextDiff(s1, s2 : AnsiString);
@@ -47,11 +49,15 @@ procedure IdSoapShowStreamDiff(AStream1 : TStream; aName1 : AnsiString; AStream2
 
 procedure SetFileReadOnly(AFileName : AnsiString; AValue : Boolean);
 
+function FileToString(filename : String; {$IFDEF UNICODE}encoding : TEncoding; {$ENDIF}AShareMode : Word = fmOpenRead + fmShareDenyWrite) : String;
+
 implementation
 
 uses
 {$IFNDEF DESIGNTIME}
+  {$IFDEF VCL}
   Forms,
+  {$ENDIF}
 {$ENDIF}
   windows,
   ShellAPI,
@@ -65,13 +71,14 @@ uses
   IdSoapNamespaces,
   IdSoapXml,
   IdSoapUtilities,
-  SysUtils,
   TypInfo;
 
 procedure IdSoapProcessMessages;
 begin
 {$IFNDEF DESIGNTIME} // work around unable to compile design time project with OLEServer
+  {$IFDEF VCL}
   Application.ProcessMessages;
+  {$ENDIF}
 {$ENDIF}
 end;
 
@@ -748,6 +755,102 @@ begin
     AStream.Position := LOldPos;
     end;
   IdSoapViewString(LString, AExtension);
+end;
+
+{$IFDEF UNICODE}
+function FileToString(filename : String; encoding : TEncoding; AShareMode : Word = fmOpenRead + fmShareDenyWrite) : String;
+var
+  LFileStream: TFilestream;
+  bytes : TBytes;
+begin
+  if FileExists(filename) then
+    begin
+    LFileStream := TFileStream.Create(filename, aShareMode);
+    try
+      SetLength(bytes, LFileStream.Size);
+      if LFileStream.Size > 0 then
+        LFileStream.Read(bytes[0], LFileStream.size);
+    finally
+      LFileStream.Free;
+    end;
+      result := encoding.GetString(bytes);
+    end
+  else
+    raise Exception.Create('File "' + filename + '" not found');
+end;
+
+procedure StringToFile(const AStr, AFilename: String; encoding : TEncoding);
+var
+  bytes : TBytes;
+  stream: TFileStream;
+begin
+  bytes := encoding.GetBytes(AStr);
+  stream := TFileStream.Create(AFilename, fmCreate);
+  try
+    if Length(bytes) > 0 then
+      stream.Write(bytes[0], Length(bytes));
+  finally
+    stream.Free;
+  end;
+end;
+
+{$ELSE}
+
+function FileToString(filename: String; AShareMode : Word = fmOpenRead + fmShareDenyWrite): String;
+var
+  LFileStream: TFilestream;
+begin
+  if FileExists(filename) then
+    begin
+    LFileStream := TFileStream.Create(filename, aShareMode);
+    try
+      SetLength(Result, LFileStream.Size);
+      if LFileStream.Size > 0 then
+        LFileStream.Read(Result[1], LFileStream.size);
+    finally
+      LFileStream.Free;
+    end;
+    end
+  else
+    raise Exception.Create('File "' + filename + '" not found');
+end;
+
+procedure StringToFile(const AStr, AFilename: String);
+var
+  stream: TFileStream;
+begin
+  stream := TFileStream.Create(AFilename, fmCreate);
+  try
+    if Length(AStr) > 0 then
+      stream.Write(AStr[1], Length(AStr));
+  finally
+    stream.Free;
+  end;
+end;
+
+
+{$ENDIF}
+
+procedure IdSoapXmlCheckDifferent(filename1, filename2 : String);
+var
+  x1, x2, f1, f2, s1, s2, cmd : String;
+begin
+  x1 := FileToString(filename1 {$IFDEF UNICODE}, TEncoding.UTF8 {$ENDIF});
+  x2 := FileToString(filename2 {$IFDEF UNICODE}, TEncoding.UTF8 {$ENDIF});
+  x1 := IdSoapMakeXmlPretty(x1);
+  x2 := IdSoapMakeXmlPretty(x2);
+  s1 := Stringreplace(Stringreplace(Stringreplace(StringReplace(StringReplace(x1, #13, '', [rfReplaceAll]), #10, '', [rfReplaceAll]), ' ', '', [rfReplaceAll]), '&quot;', '"', [rfReplaceAll]), '&#39;', '''', [rfReplaceAll]);
+  s2 := Stringreplace(Stringreplace(Stringreplace(StringReplace(StringReplace(x2, #13, '', [rfReplaceAll]), #10, '', [rfReplaceAll]), ' ', '', [rfReplaceAll]), '&quot;', '"', [rfReplaceAll]), '&#39;', '''', [rfReplaceAll]);
+
+  if (s1 <> s2) then
+  begin
+    f1 := MakeTempFilename +'-source.xml';
+    f2 := MakeTempFilename +'-dest.xml';
+    StringToFile(x1, f1{$IFDEF UNICODE}, TEncoding.UTF8{$ENDIF});
+    StringToFile(x2, f2{$IFDEF UNICODE}, TEncoding.UTF8{$ENDIF});
+    cmd := f1+' '+f2;
+    ShellExecute(0, 'open', '"C:\Program Files (x86)\WinMerge\WinMergeU.exe"', PChar(cmd), PChar(ExtractFilePath(f1)), SW_MAXIMIZE);
+  end;
 end;
 
 procedure IdSoapShowXMLDiff(AStream1, AStream2 : TStream);

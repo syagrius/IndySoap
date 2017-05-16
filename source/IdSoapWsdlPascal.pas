@@ -1661,9 +1661,14 @@ Begin
   Assert(ASoapname <> '', ASSERT_LOCATION+': SoapName is blank');
 
   Result := ASoapName;
-  If FPrependTypeNames And ((ASoapName[1] <> 'T') Or (Length(ASoapName) = 1) Or (upcase(ASoapName[2]) <> ASoapName[2])) Then
+  result := StringReplace(result, '.', '_', [rfReplaceAll]);
+  if not IsValidIdent(result {$IFDEF UNICODE}, false{$ENDIF}) then // todo: what version was this introduced?
+    raise Exception.Create('Invalid name: '+result);
+
+
+  If FPrependTypeNames And ((result[1] <> 'T') Or (Length(result) = 1) Or (upcase(result[2]) <> result[2])) Then
     Begin
-    Result := 'T'+ASoapName;
+    Result := 'T'+result;
     End;
   LModified := False;
   While (FUsedPascalIDs.IndexOf(Result) > -1) Or (FReservedPascalNames.Indexof(Result) > -1) Do

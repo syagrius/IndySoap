@@ -19,6 +19,7 @@ uses
 type
   TIdStringList = class(TStringList)
   Private
+    FSerialNo : cardinal;
     FOwnsObjects: Boolean;
   Public
     constructor Create(AOwnsObjects: Boolean = False);
@@ -59,6 +60,7 @@ type
 
   TIdCriticalSection = class(TSynchroObject)
   Protected
+    FSerialNo : Cardinal;
     FSection: TRTLCriticalSection;
     FOwnerThread: Cardinal;
     FOwnerThreadCount: Cardinal;
@@ -74,6 +76,7 @@ type
 
   TIdObjectList = class(TObjectList)
   Private
+    FSerialNo : cardinal;
   Public
     constructor Create(AOwnsObjects: Boolean);
     destructor Destroy; Override;
@@ -201,7 +204,7 @@ constructor TIdStringList.Create;
 begin
   inherited Create;
   FOwnsObjects := AOwnsObjects;
-  IdObjectRegister(self);
+  FSerialNo := IdObjectRegister(self);
 end;
 
 destructor TIdStringList.Destroy;
@@ -209,7 +212,7 @@ const ASSERT_LOCATION = ASSERT_UNIT+'.TIdStringList.Destroy';
 begin
   assert(assigned(self), ASSERT_LOCATION + ': self is nil');
   Clear;
-  IdObjectDeregister(self);
+  IdObjectDeregister(self, FSerialNo);
   inherited Destroy;
 end;
 
@@ -261,7 +264,7 @@ end;
 constructor TIdCriticalSection.Create;
 begin
   inherited Create;
-  IdObjectRegister(self);
+  FSerialNo := IdObjectRegister(self);
   InitializeCriticalSection(FSection);
   FOwnerThread := 0;
   FOwnerThreadCount := 0;
@@ -271,7 +274,7 @@ destructor TIdCriticalSection.Destroy;
 const ASSERT_LOCATION = ASSERT_UNIT+'.TIdCriticalSection.Destroy';
 begin
   Assert(Assigned(Self), ASSERT_LOCATION + ': Self is nil');
-  IdObjectDeregister(self);
+  IdObjectDeregister(self, FSerialNo);
   DeleteCriticalSection(FSection);
   inherited Destroy;
 end;
@@ -360,7 +363,7 @@ end;
 destructor TIdMemoryStream.Destroy;
 const ASSERT_LOCATION = ASSERT_UNIT+'.TIdMemoryStream.destroy';
 begin
-  IdObjectDeregister(self);
+  IdObjectDeregister(self, FSerialNo);
   inherited;
 end;
 
@@ -417,12 +420,12 @@ end;
 constructor TIdObjectList.Create(AOwnsObjects: Boolean);
 begin
   inherited create(AOwnsObjects);
-  IdObjectRegister(self);
+  FSerialNo := IdObjectRegister(self);
 end;
 
 destructor TIdObjectList.Destroy;
 begin
-  IdObjectDeregister(self);
+  IdObjectDeregister(self, FSerialNo);
   inherited;
 end;
 

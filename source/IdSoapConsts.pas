@@ -247,7 +247,7 @@ Const
   ID_SOAP_XSI_TYPE_IDREF = 'IDREF';                                              // do not localise
 
   // HTTP RPC settings                                                           // do not localise
-  ID_SOAP_DEFAULT_SOAP_PATH = '/soap/';                                          // do not localise
+  ID_SOAP_DEFAULT_SOAP_PATH = '/soap';                                          // do not localise
   ID_SOAP_HTTP_ACTION_HEADER = 'SOAPAction';                                     // do not localise
 // V1.2 ID_SOAP_HTTP_SOAP_TYPE = 'application/soap';                             // do not localise
   ID_SOAP_HTTP_SOAP_TYPE = 'text/xml';                                           // do not localise

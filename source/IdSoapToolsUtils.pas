@@ -94,7 +94,7 @@ Uses
 Procedure QuickBuildITI(APascalFile: String; ABuildBin, ABuildRes, ABuildXML: Boolean);
 Var
   LFileName : String;
-  s : String;
+  s : AnsiString;
   LFile : TFileStream;
 Begin
   s :=

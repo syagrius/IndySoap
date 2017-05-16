@@ -51,6 +51,8 @@ type
     property MediaType : String read GetMediaType write SetMediaType;
     property ContentDisposition : String read GetContentDisposition write SetContentDisposition;
     property TransferEncoding : String read GetTransferEncoding write SetTransferEncoding;
+
+    function ParamName : String;
   end;
 
   TIdSoapMimePartList = class (TObjectList)
@@ -81,6 +83,10 @@ type
     property Boundary : ansistring read FBoundary write FBoundary;
     property Start : String read FStart write FStart;
     property MainType : String read FMainType write FMainType;
+
+    // for multi-part forms
+    function getparam(name : String) : TIdSoapMimePart;
+    function hasParam(name : String) : Boolean;
 
     procedure ReadFromStream(AStream : TStream); overload;
     procedure ReadFromStream(AStream : TStream; AContentType : String); overload; // headers are not part of the stream
@@ -275,10 +281,10 @@ begin
         AStream.Read(LBuffer[LEnd], 1);
         inc(LEnd);
         end;
-      LComp0 := pointer(integer(LBuffer)+LEnd-LCompLen);
+      LComp0 := pointer(NativeUInt(LBuffer)+LEnd-LCompLen);
       if (LEnd >= LCompLen) and CompareMem(LComp0, LComp1, LCompLen) then
         begin
-        FContent.Write(LBuffer^, LEnd - (LCompLen + 2)); // -2 for the EOL
+        FContent.Write(LBuffer^, LEnd - (LCompLen + 2 + 2)); // -2 for the EOL, +2 for the other EOL
         break;
         end;
       end;
@@ -321,7 +327,10 @@ begin
   else
     begin
     AStream.CopyFrom(FContent, (FContent.Size - FContent.Position)-2);
-    LTemp := ReadBytes(FContent, 2);
+    if FContent.Size - FContent.Position >= 2 then
+      LTemp := ReadBytes(FContent, 2)
+    else
+      LTemp := '';
     WriteString(AStream, LTemp);
     if LTemp <> EOL_WINDOWS then
       begin
@@ -343,6 +352,50 @@ const ASSERT_LOCATION = ASSERT_UNIT+'.TIdSoapMimePart.GetTransferEncoding';
 begin
   assert(self.TestValid(TIdSoapMimePart), ASSERT_LOCATION+': self is not valid');
   result := FHeaders.Values[ID_SOAP_MIME_TRANSFERENCODING];
+end;
+
+Function StringSplit(Const sValue, sDelimiter : String; Var sLeft, sRight: String) : Boolean;
+Var
+  iIndex : Integer;
+  sA, sB : String;
+Begin
+  // Find the delimiter within the source string
+  iIndex := Pos(sDelimiter, sValue);
+  Result := iIndex <> 0;
+
+  If Not Result Then
+  Begin
+    sA := sValue;
+    sB := '';
+  End
+  Else
+  Begin
+    sA := Copy(sValue, 1, iIndex - 1);
+    sB := Copy(sValue, iIndex + Length(sDelimiter), MaxInt);
+  End;
+
+  sLeft := sA;
+  sRight := sB;
+End;
+
+function StartsWith(s, test : String):Boolean;
+begin
+  result := lowercase(copy(s, 1, length(test))) = lowercase(test);
+end;
+
+function TIdSoapMimePart.ParamName: String;
+var
+  s : String;
+begin
+  s := Headers.Values['Content-Disposition'];
+  StringSplit(s, ';', s, result);
+  if (s = 'form-data') and StartsWith(trim(result), 'name="') then
+  begin
+    result := copy(result, 8, $FFFF);
+    result := copy(result, 1, pos('"', result)-1);
+  end
+  else
+    result := '';
 end;
 
 procedure TIdSoapMimePart.SetMediaType(const AValue: String);
@@ -519,6 +572,28 @@ begin
   result := FParts[FStart];
 end;
 
+function TIdSoapMimeMessage.getparam(name: String): TIdSoapMimePart;
+var
+  i: Integer;
+begin
+  result := nil;
+  for i := 0 to Parts.Count - 1 do
+    if Parts.PartByIndex[i].ParamName = name then
+    begin
+      result := Parts.PartByIndex[i];
+      exit;
+    end;
+end;
+
+function TIdSoapMimeMessage.hasParam(name: String): Boolean;
+var
+  i: Integer;
+begin
+  result := false;
+  for i := 0 to Parts.Count - 1 do
+    result := result or (Parts.PartByIndex[i].ParamName = name);
+end;
+
 procedure TIdSoapMimeMessage.ReadFromStream(AStream: TStream; AContentType: String);
 const ASSERT_LOCATION = ASSERT_UNIT+'.TIdSoapMimeMessage.ReadFromStream';
 var
@@ -542,6 +617,7 @@ begin
         FreeAndNil(LPart);
         raise;
       end;
+      LPart.FContent.Position := 0;
       FParts.Add(LPart);
       end
   until LTemp = '--';

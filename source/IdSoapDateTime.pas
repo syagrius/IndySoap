@@ -15,6 +15,11 @@ uses
   IdSoapTypeRegistry;
 
 type
+  TIdSoapDuration = class (TIdSoapSimpleClass)
+  private
+  public
+  end;
+
   TIdSoapTimeZoneInfo = (tzUnknown, tzUTC, tzNegative, tzPositive);
 
   TIdSoapDateTime = class (TIdSoapSimpleClass)

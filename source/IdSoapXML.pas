@@ -451,6 +451,7 @@ Function IdSoapDomFactory(AXmlProvider : TIdSoapXmlProvider = xpOpenXML) : TIdSo
 {$IFDEF UNICODE}
 function IsXmlName(const S: String): boolean;
 {$ENDIF}
+Function XMLToText(AStr: String): String;
 
 Implementation
 
@@ -2463,13 +2464,13 @@ Const ASSERT_LOCATION = ASSERT_UNIT+'.TIdSoapCustomDom.Read';
 Var
   s : String;
 Begin
-  FLength := ASource.Size - ASource.Position;
-  If FLength = 0 Then
+  If ASource.Size - ASource.Position = 0 Then
     Begin
     Raise EIdSoapXmlParseError.Create('Source was empty');
     End;
 
   s := IdSoapReadStreamToString(ASource, '');
+  FLength := length(s);
   GetMem(FSrc, FLength{$IFDEF UNICODE} * 2{$ENDIF});
   Try
     move(s[1], FSrc^, FLength{$IFDEF UNICODE} * 2{$ENDIF});

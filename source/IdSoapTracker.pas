@@ -5,7 +5,7 @@ interface
 {$I IdSoapDefines.inc}
 
 {$IFNDEF OBJECT_TRACKING}
-  This unit should only be included if OBJECT_TRACKING is defined
+  // This unit should only be included if OBJECT_TRACKING is defined
 {$ENDIF}
 
 
@@ -110,6 +110,7 @@ begin
   {$IFDEF CLR}
   Debugger.Break;
   {$ELSE}
+  {$IFDEF WIN32}
   try
     asm
     int $03
@@ -118,6 +119,7 @@ begin
     // on some poorly configured Windows systems int $03 can cause unhandled
     // exceptions with improperly installed Dr Watsons etc....
   end;
+  {$ENDIF}
   {$ENDIF}
 end;
 
