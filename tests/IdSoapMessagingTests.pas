@@ -206,7 +206,7 @@ var
 begin
   LWriter := TIdSoapWriterXML.create(IdSoapV1_1, xpOpenXML);
   try
-    LWriter.SetMessageName('ProcCall', FListener.DefaultNamespace);
+    LWriter.SetMessageName('ProcCallRequest', FListener.DefaultNamespace);
     FExceptionClass := nil;
     FSender.SoapSend(LWriter, nil, '');
     Check(FExceptionClass = nil);
