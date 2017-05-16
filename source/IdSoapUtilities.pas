@@ -1673,6 +1673,8 @@ var
   function GetHexVal(ACh: Char): Byte;
     begin
     ACh := Upcase(ACh);
+    if not CharInSet(aCH, ['A'..'Z', '0'..'9']) then
+      raise Exception.Create('Illegal cahracter in Hexidecimal: %'+inttostr(Ord(ACh)));
     if ACh > '9' then
       begin
       Result := Ord(ACh) - Ord('A') + 10;
